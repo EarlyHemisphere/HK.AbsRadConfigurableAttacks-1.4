@@ -27,6 +27,14 @@ namespace AbsRadConfigurableAttacks {
             { "nailFan", "firstPhaseNailFan" },
             { "orbs", "firstPhaseOrbs" },
         };
+        private static Dictionary<string, string> platformPhaseBtnNames = new Dictionary<string, string>() {
+            { "nailSweep", "platformPhaseNailSweep" },
+            { "eyeBeams", "platformPhaseEyeBeams" },
+            { "beamSweepLeft", "platformPhaseBeamSweepLeft" },
+            { "beamSweepRight", "platformPhaseBeamSweepRight" },
+            { "nailFan", "platformPhaseNailFan" },
+            { "orbs", "platformPhaseOrbs" },
+        };
         private static Dictionary<string, string> btnLabels = new Dictionary<string, string>() {
             { "nailSweep", "Nail Sweep" },
             { "nailSweepRight", "Nail Sweep Right" },
@@ -37,14 +45,6 @@ namespace AbsRadConfigurableAttacks {
             { "beamSweepRight", "Beam Sweep Right" },
             { "nailFan", "Sword Burst" },
             { "orbs", "Orb Barrage" },
-        };
-        private static Dictionary<string, string> platformPhaseBtnNames = new Dictionary<string, string>() {
-            { "nailSweep", "platformPhaseNailSweep" },
-            { "eyeBeams", "platformPhaseEyeBeams" },
-            { "beamSweepLeft", "platformPhaseBeamSweepLeft" },
-            { "beamSweepRight", "platformPhaseBeamSweepRight" },
-            { "nailFan", "platformPhaseNailFan" },
-            { "orbs", "platformPhaseOrbs" },
         };
         private static Dictionary<string, float> firstPhaseDefaults = new Dictionary<string, float>() {
             { "nailSweepRight", 0.5f },
@@ -168,13 +168,13 @@ namespace AbsRadConfigurableAttacks {
                 if (firstPhaseWeights[key] > 1f) {
                     firstPhaseWeights[key] = 0f;
                 }
-                topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Start");
+                topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Start").UpdateText(string.Format("{0}: {1:0.##}", btnLabels[key], firstPhaseWeights[key]));
             } else {
                 platformPhaseWeights[key] += 0.25f;
                 if (platformPhaseWeights[key] > 1f) {
                     platformPhaseWeights[key] = 0f;
                 }
-                topMenuPanel.GetButton(platformPhaseBtnNames[key], "AR Plats");
+                topMenuPanel.GetButton(platformPhaseBtnNames[key], "AR Plats").UpdateText(string.Format("{0}: {1:0.##}", btnLabels[key], platformPhaseWeights[key]));;
             }
             UpdateWeightsFSM();
             CheckRepititionCap();
