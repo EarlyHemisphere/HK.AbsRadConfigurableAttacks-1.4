@@ -1,18 +1,52 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Modding;
 using ModCommon.Util;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using UnityEngine;
-using DebugMod;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using USceneManager = UnityEngine.SceneManagement.SceneManager;
+using DebugMod;
+using DebugMod.Canvas;
 
 namespace AbsRadConfigurableAttacks {
     public class AbsRadConfigurableAttacks : Mod {
         public static AbsRadConfigurableAttacks instance;
         private PlayMakerFSM attackChoicesFSM = null;
-        public static Dictionary<string, float> firstPhaseDefaults = new Dictionary<string, float>() {
+        private CanvasPanel topMenuPanel;
+        private static Dictionary<string, string> firstPhaseBtnNames = new Dictionary<string, string>() {
+            { "nailSweepRight", "firstPhaseNailSweepRight" },
+            { "nailSweepLeft", "firstPhaseNailSweepLeft" },
+            { "nailSweepTop", "firstPhaseNailSweepTop" },
+            { "eyeBeams", "firstPhaseEyeBeams" },
+            { "beamSweepLeft", "firstPhaseBeamSweepLeft" },
+            { "beamSweepRight", "firstPhaseBeamSweepRight" },
+            { "nailFan", "firstPhaseNailFan" },
+            { "orbs", "firstPhaseOrbs" },
+        };
+        private static Dictionary<string, string> btnLabels = new Dictionary<string, string>() {
+            { "nailSweep", "Nail Sweep" },
+            { "nailSweepRight", "Nail Sweep Right" },
+            { "nailSweepLeft", "Nail Sweep Left" },
+            { "nailSweepTop", "Sword Rain" },
+            { "eyeBeams", "Beam Burst" },
+            { "beamSweepLeft", "Beam Sweep Left" },
+            { "beamSweepRight", "Beam Sweep Right" },
+            { "nailFan", "Sword Burst" },
+            { "orbs", "Orb Barrage" },
+        };
+        private static Dictionary<string, string> platformPhaseBtnNames = new Dictionary<string, string>() {
+            { "nailSweep", "platformPhaseNailSweep" },
+            { "eyeBeams", "platformPhaseEyeBeams" },
+            { "beamSweepLeft", "platformPhaseBeamSweepLeft" },
+            { "beamSweepRight", "platformPhaseBeamSweepRight" },
+            { "nailFan", "platformPhaseNailFan" },
+            { "orbs", "platformPhaseOrbs" },
+        };
+        private static Dictionary<string, float> firstPhaseDefaults = new Dictionary<string, float>() {
             { "nailSweepRight", 0.5f },
             { "nailSweepLeft", 0.5f },
             { "nailSweepTop", 0.75f },
@@ -22,7 +56,7 @@ namespace AbsRadConfigurableAttacks {
             { "nailFan", 1f },
             { "orbs", 1f },
         };
-        public static Dictionary<string, float> platformPhaseDefaults = new Dictionary<string, float>(){
+        private static Dictionary<string, float> platformPhaseDefaults = new Dictionary<string, float>(){
             { "nailSweep", 0.5f },
             { "eyeBeams", 1f },
             { "beamSweepLeft", 0.75f },
@@ -41,81 +75,27 @@ namespace AbsRadConfigurableAttacks {
             Log("Initializing");
 
             USceneManager.activeSceneChanged += InitiateRadiancePolling;
+            topMenuPanel = ((DebugMod.Canvas.CanvasPanel) typeof(DebugMod.TopMenu).GetField("panel", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null));
 
             DebugMod.DebugMod.AddTopMenuContent(
-                MenuName: "AbsRad First Phases",
-                ButtonList: new List<TopMenuButton>() {
-                    new TextButton(
-                        buttonText: $"Sword Rain: {firstPhaseWeights["nailSweepTop"]}",
-                        clickedFunction: _ => ApplyChange("nailSweepTop")
-                    ),
-                    new TextButton(
-                        buttonText: $"Nail Sweep Left: {firstPhaseWeights["nailSweepLeft"]}",
-                        clickedFunction: _ => ApplyChange("nailSweepLeft")
-                    ),
-                    new TextButton(
-                        buttonText: $"Nail Sweep Right: {firstPhaseWeights["nailSweepRight"]}",
-                        clickedFunction: _ => ApplyChange("nailSweepRight")
-                    ),
-                    new TextButton(
-                        buttonText: $"Beam Burst: {firstPhaseWeights["eyeBeams"]}",
-                        clickedFunction: _ => ApplyChange("eyeBeams")
-                    ),
-                    new TextButton(
-                        buttonText: $"Beam Sweep Left: {firstPhaseWeights["beamSweepLeft"]}",
-                        clickedFunction: _ => ApplyChange("beamSweepLeft")
-                    ),
-                    new TextButton(
-                        buttonText: $"Beam Sweep Right: {firstPhaseWeights["beamSweepRight"]}",
-                        clickedFunction: _ => ApplyChange("beamSweepRight")
-                    ),
-                    new TextButton(
-                        buttonText: $"Sword Burst: {firstPhaseWeights["nailFan"]}",
-                        clickedFunction: _ => ApplyChange("nailFan")
-                    ),
-                    new TextButton(
-                        buttonText: $"Orb Barrage: {firstPhaseWeights["orbs"]}",
-                        clickedFunction: _ => ApplyChange("orbs")
-                    ),
-                    new TextButton(
-                        buttonText: "Reset To Defaults",
-                        clickedFunction: _ => ResetFirstPhases()
-                    ),
-                }
+                MenuName: "AR Start",
+                ButtonList: new List<TopMenuButton>(firstPhaseDefaults.Keys.ToList().Select(key =>
+                    new AttackConfigButton(
+                        name: firstPhaseBtnNames[key],
+                        buttonText: string.Format("{0}: {1:0.##}", btnLabels[key], firstPhaseWeights[key]),
+                        clickedFunction: _ => ApplyChange(key)
+                    )
+                ))
             );
-
             DebugMod.DebugMod.AddTopMenuContent(
-                MenuName: "AbsRad Platform Phase",
-                ButtonList: new List<TopMenuButton>() {
-                    new TextButton(
-                        buttonText: $"Nail Sweep: {platformPhaseWeights["nailSweep"]}",
-                        clickedFunction: _ => ApplyChange("nailSweep", false)
-                    ),
-                    new TextButton(
-                        buttonText: $"Beam Burst: {platformPhaseWeights["eyeBeams"]}",
-                        clickedFunction: _ => ApplyChange("eyeBeams", false)
-                    ),
-                    new TextButton(
-                        buttonText: $"Beam Sweep Left: {platformPhaseWeights["beamSweepLeft"]}",
-                        clickedFunction: _ => ApplyChange("beamSweepLeft", false)
-                    ),
-                    new TextButton(
-                        buttonText: $"Beam Sweep Right: {platformPhaseWeights["beamSweepRight"]}",
-                        clickedFunction: _ => ApplyChange("beamSweepRight", false)
-                    ),
-                    new TextButton(
-                        buttonText: $"Sword Burst: {platformPhaseWeights["nailFan"]}",
-                        clickedFunction: _ => ApplyChange("nailFan", false)
-                    ),
-                    new TextButton(
-                        buttonText: $"Orb Barrage: {platformPhaseWeights["orbs"]}",
-                        clickedFunction: _ => ApplyChange("orbs", false)
-                    ),
-                    new TextButton(
-                        buttonText: "Reset To Defaults",
-                        clickedFunction: _ => ResetPlatsPhase()
-                    ),
-                }
+                MenuName: "AR Plats",
+                ButtonList: new List<TopMenuButton>(platformPhaseDefaults.Keys.ToList().Select(key =>
+                    new AttackConfigButton(
+                        name: platformPhaseBtnNames[key],
+                        buttonText: string.Format("{0}: {1:0.##}", btnLabels[key], platformPhaseWeights[key]),
+                        clickedFunction: _ => ApplyChange(key, false)
+                    )
+                ))
             );
 
             Log("Initialized");
@@ -144,6 +124,8 @@ namespace AbsRadConfigurableAttacks {
         }
 
         public override string GetVersion() => GetType().Assembly.GetName().Version.ToString();
+
+        public override int LoadPriority() => 2; // 1.4 modding api default is 1 instead of 0 :/
 
         private void ResetFirstPhases() {
             firstPhaseWeights = new Dictionary<string, float>(firstPhaseDefaults);
@@ -180,20 +162,23 @@ namespace AbsRadConfigurableAttacks {
             };
         }
 
-        private void ApplyChange(string key, bool firstPhase = true) {
+        public void ApplyChange(string key, bool firstPhase = true) {
             if (firstPhase) {
                 firstPhaseWeights[key] += 0.25f;
                 if (firstPhaseWeights[key] > 1f) {
                     firstPhaseWeights[key] = 0f;
                 }
+                topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Start");
             } else {
                 platformPhaseWeights[key] += 0.25f;
                 if (platformPhaseWeights[key] > 1f) {
                     platformPhaseWeights[key] = 0f;
                 }
+                topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Plats");
             }
             UpdateWeightsFSM();
             CheckRepititionCap();
+            DebugMod.TopMenu.Update();
         }
 
         private bool FirstPhaseSettingsAreDefault() {
@@ -254,6 +239,27 @@ namespace AbsRadConfigurableAttacks {
             SendRandomEventV3 action = attackChoicesFSM.GetAction<SendRandomEventV3>("A2 Choice", 1);
             action.eventMax = new FsmInt[]{1, 2, 1, 2, 1, 1};
             action.missedMax = new FsmInt[]{12, 10, 10, 10, 12, 12};
+        }
+    }
+
+    public class AttackConfigButton:TopMenuButton {
+        public string ButtonText { get; }
+        public string Name { get; }
+        public AttackConfigButton(string name, string buttonText, UnityAction<string> clickedFunction) {
+            Name = name;
+            ButtonText = buttonText;
+            ClickedFunction = clickedFunction;
+        }
+        public override void CreateButton(CanvasPanel panel){
+            panel.AddButton(ButtonText,
+                GUIController.Instance.images["ButtonRectEmpty"],
+                panel.GetNextPos(CanvasPanel.MenuItems.TextButton),
+                Vector2.zero,
+                ClickedFunction,
+                new Rect(0f, 0f, 90f, 20f),
+                GUIController.Instance.trajanNormal,
+                ButtonText,
+                9);
         }
     }
 }
