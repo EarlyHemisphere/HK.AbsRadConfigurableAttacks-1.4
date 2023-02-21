@@ -174,7 +174,7 @@ namespace AbsRadConfigurableAttacks {
                 if (platformPhaseWeights[key] > 1f) {
                     platformPhaseWeights[key] = 0f;
                 }
-                topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Plats");
+                topMenuPanel.GetButton(platformPhaseBtnNames[key], "AR Plats");
             }
             UpdateWeightsFSM();
             CheckRepititionCap();
