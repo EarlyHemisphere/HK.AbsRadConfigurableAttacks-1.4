@@ -251,7 +251,7 @@ namespace AbsRadConfigurableAttacks {
             ClickedFunction = clickedFunction;
         }
         public override void CreateButton(CanvasPanel panel){
-            panel.AddButton(ButtonText,
+            panel.AddButton(Name,
                 GUIController.Instance.images["ButtonRectEmpty"],
                 panel.GetNextPos(CanvasPanel.MenuItems.TextButton),
                 Vector2.zero,
