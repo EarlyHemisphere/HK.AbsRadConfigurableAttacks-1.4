@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Modding;
 using ModCommon.Util;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using USceneManager = UnityEngine.SceneManagement.SceneManager;
 using DebugMod;
@@ -72,30 +70,105 @@ namespace AbsRadConfigurableAttacks {
         }
 
         public override void Initialize() {
-            Log("Initializing");
-
             USceneManager.activeSceneChanged += InitiateRadiancePolling;
+
             topMenuPanel = ((DebugMod.Canvas.CanvasPanel) typeof(DebugMod.TopMenu).GetField("panel", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null));
 
             DebugMod.DebugMod.AddTopMenuContent(
+                MenuName: "",
+                ButtonList: new List<TopMenuButton>()
+            ); // Accounts for top menu display glitch
+
+            DebugMod.DebugMod.AddTopMenuContent(
                 MenuName: "AR Start",
-                ButtonList: new List<TopMenuButton>(firstPhaseDefaults.Keys.ToList().Select(key =>
+                ButtonList: new List<TopMenuButton>() {
                     new AttackConfigButton(
-                        name: firstPhaseBtnNames[key],
-                        buttonText: string.Format("{0}: {1:0.##}", btnLabels[key], firstPhaseWeights[key]),
-                        clickedFunction: _ => ApplyChange(key)
-                    )
-                ))
+                        name: firstPhaseBtnNames["nailSweepTop"],
+                        buttonText: GetButtonText("nailSweepTop"),
+                        clickedFunction: _ => ApplyChange("nailSweepTop")
+                    ),
+                    new AttackConfigButton(
+                        name: firstPhaseBtnNames["nailSweepLeft"],
+                        buttonText: GetButtonText("nailSweepLeft"),
+                        clickedFunction: _ => ApplyChange("nailSweepLeft")
+                    ),
+                    new AttackConfigButton(
+                        name: firstPhaseBtnNames["nailSweepRight"],
+                        buttonText: GetButtonText("nailSweepRight"),
+                        clickedFunction: _ => ApplyChange("nailSweepRight")
+                    ),
+                    new AttackConfigButton(
+                        name: firstPhaseBtnNames["eyeBeams"],
+                        buttonText: GetButtonText("eyeBeams"),
+                        clickedFunction: _ => ApplyChange("eyeBeams")
+                    ),
+                    new AttackConfigButton(
+                        name: firstPhaseBtnNames["beamSweepLeft"],
+                        buttonText: GetButtonText("beamSweepLeft"),
+                        clickedFunction: _ => ApplyChange("beamSweepLeft")
+                    ),
+                    new AttackConfigButton(
+                        name: firstPhaseBtnNames["beamSweepRight"],
+                        buttonText: GetButtonText("beamSweepRight"),
+                        clickedFunction: _ => ApplyChange("beamSweepRight")
+                    ),
+                    new AttackConfigButton(
+                        name: firstPhaseBtnNames["nailFan"],
+                        buttonText: GetButtonText("nailFan"),
+                        clickedFunction: _ => ApplyChange("nailFan")
+                    ),
+                    new AttackConfigButton(
+                        name: firstPhaseBtnNames["orbs"],
+                        buttonText: GetButtonText("orbs"),
+                        clickedFunction: _ => ApplyChange("orbs")
+                    ),
+                    new AttackConfigButton(
+                        name: "firstPhaseReset",
+                        buttonText: "Reset To Defaults",
+                        clickedFunction: _ => ResetFirstPhases()
+                    ),
+                }
             );
+
             DebugMod.DebugMod.AddTopMenuContent(
                 MenuName: "AR Plats",
-                ButtonList: new List<TopMenuButton>(platformPhaseDefaults.Keys.ToList().Select(key =>
+                ButtonList: new List<TopMenuButton>() {
                     new AttackConfigButton(
-                        name: platformPhaseBtnNames[key],
-                        buttonText: string.Format("{0}: {1:0.##}", btnLabels[key], platformPhaseWeights[key]),
-                        clickedFunction: _ => ApplyChange(key, false)
-                    )
-                ))
+                        name: platformPhaseBtnNames["nailSweep"],
+                        buttonText: GetButtonText("nailSweep", false),
+                        clickedFunction: _ => ApplyChange("nailSweep", false)
+                    ),
+                    new AttackConfigButton(
+                        name: platformPhaseBtnNames["eyeBeams"],
+                        buttonText: GetButtonText("eyeBeams", false),
+                        clickedFunction: _ => ApplyChange("eyeBeams", false)
+                    ),
+                    new AttackConfigButton(
+                        name: platformPhaseBtnNames["beamSweepLeft"],
+                        buttonText: GetButtonText("beamSweepLeft", false),
+                        clickedFunction: _ => ApplyChange("beamSweepLeft", false)
+                    ),
+                    new AttackConfigButton(
+                        name: platformPhaseBtnNames["beamSweepRight"],
+                        buttonText: GetButtonText("beamSweepRight", false),
+                        clickedFunction: _ => ApplyChange("beamSweepRight", false)
+                    ),
+                    new AttackConfigButton(
+                        name: platformPhaseBtnNames["nailFan"],
+                        buttonText: GetButtonText("nailFan", false),
+                        clickedFunction: _ => ApplyChange("nailFan", false)
+                    ),
+                    new AttackConfigButton(
+                        name: platformPhaseBtnNames["orbs"],
+                        buttonText: GetButtonText("orbs", false),
+                        clickedFunction: _ => ApplyChange("orbs", false)
+                    ),
+                    new AttackConfigButton(
+                        name: "platformPhaseReset",
+                        buttonText: "Reset To Defaults",
+                        clickedFunction: _ => ResetPlatsPhase()
+                    ),
+                }
             );
 
             Log("Initialized");
@@ -118,8 +191,6 @@ namespace AbsRadConfigurableAttacks {
                     UpdateWeightsFSM();
                     CheckRepititionCap();
                 }
-            } else {
-                ModHooks.Instance.HeroUpdateHook -= RadiancePoll;
             }
         }
 
@@ -127,14 +198,24 @@ namespace AbsRadConfigurableAttacks {
 
         public override int LoadPriority() => 2; // 1.4 modding api default is 1 instead of 0 :/
 
+        private string GetButtonText(string key, bool firstPhase = true) {
+            return string.Format("{0}: {1:0.##}", btnLabels[key], firstPhase ? firstPhaseWeights[key] : platformPhaseWeights[key]);
+        }
+
         private void ResetFirstPhases() {
             firstPhaseWeights = new Dictionary<string, float>(firstPhaseDefaults);
+            foreach (var key in firstPhaseDefaults.Keys) {
+                topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Start").UpdateText(GetButtonText(key));
+            }
             UpdateWeightsFSM();
             RemoveFirstPhasesAttackRepititionCap();
         }
 
         private void ResetPlatsPhase() {
             platformPhaseWeights = new Dictionary<string, float>(platformPhaseDefaults);
+            foreach (var key in platformPhaseDefaults.Keys) {
+                topMenuPanel.GetButton(platformPhaseBtnNames[key], "AR Plats").UpdateText(GetButtonText(key, false));
+            }
             UpdateWeightsFSM();
             RemovePlatsAttackRepititionCap();
         }
@@ -168,17 +249,16 @@ namespace AbsRadConfigurableAttacks {
                 if (firstPhaseWeights[key] > 1f) {
                     firstPhaseWeights[key] = 0f;
                 }
-                topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Start").UpdateText(string.Format("{0}: {1:0.##}", btnLabels[key], firstPhaseWeights[key]));
+                topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Start").UpdateText(GetButtonText(key));
             } else {
                 platformPhaseWeights[key] += 0.25f;
                 if (platformPhaseWeights[key] > 1f) {
                     platformPhaseWeights[key] = 0f;
                 }
-                topMenuPanel.GetButton(platformPhaseBtnNames[key], "AR Plats").UpdateText(string.Format("{0}: {1:0.##}", btnLabels[key], platformPhaseWeights[key]));;
+                topMenuPanel.GetButton(platformPhaseBtnNames[key], "AR Plats").UpdateText(GetButtonText(key, false));
             }
             UpdateWeightsFSM();
             CheckRepititionCap();
-            DebugMod.TopMenu.Update();
         }
 
         private bool FirstPhaseSettingsAreDefault() {
@@ -239,27 +319,6 @@ namespace AbsRadConfigurableAttacks {
             SendRandomEventV3 action = attackChoicesFSM.GetAction<SendRandomEventV3>("A2 Choice", 1);
             action.eventMax = new FsmInt[]{1, 2, 1, 2, 1, 1};
             action.missedMax = new FsmInt[]{12, 10, 10, 10, 12, 12};
-        }
-    }
-
-    public class AttackConfigButton:TopMenuButton {
-        public string ButtonText { get; }
-        public string Name { get; }
-        public AttackConfigButton(string name, string buttonText, UnityAction<string> clickedFunction) {
-            Name = name;
-            ButtonText = buttonText;
-            ClickedFunction = clickedFunction;
-        }
-        public override void CreateButton(CanvasPanel panel){
-            panel.AddButton(Name,
-                GUIController.Instance.images["ButtonRectEmpty"],
-                panel.GetNextPos(CanvasPanel.MenuItems.TextButton),
-                Vector2.zero,
-                ClickedFunction,
-                new Rect(0f, 0f, 90f, 20f),
-                GUIController.Instance.trajanNormal,
-                ButtonText,
-                9);
         }
     }
 }

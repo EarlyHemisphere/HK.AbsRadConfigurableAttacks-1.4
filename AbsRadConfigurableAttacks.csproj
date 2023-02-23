@@ -10,7 +10,7 @@
   <PropertyGroup>
     <RootNamespace>AbsRadConfigurableAttacks</RootNamespace>
     <AssemblyName>AbsRadConfigurableAttacks</AssemblyName>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <AssemblyTitle>AbsRadConfigurableAttacks</AssemblyTitle>
     <Product>AbsRadConfigurableAttacks</Product>
     <Description>A Hollow Knight Mod</Description>
@@ -19,14 +19,12 @@
     <FileVersion>1.0.0.0</FileVersion>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>latest</LangVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <Target Name="CopyMod" AfterTargets="PostBuildEvent">
     <RemoveDir Condition="Exists('$(ExportDir)/$(TargetName)/')" Directories="$(ExportDir)/$(TargetName)/" />
     <MakeDir Directories="$(ExportDir)/$(TargetName)/" />
     <MakeDir Directories="$(ExportDir)/$(TargetName)/zip/" />
-    <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(TargetName)/')" Directories="$(HollowKnightRefs)/Mods/$(TargetName)/" />
 
     <Copy Condition="'$(DocumentationFile)' != ''" SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb;$(TargetDir)/$(TargetName).xml" DestinationFolder="$(HollowKnightRefs)/Mods/" />
     <Copy Condition="'$(DocumentationFile)' == ''" SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/" />
@@ -83,6 +81,9 @@
     </Reference>
     <Reference Include="MonoMod.Utils">
       <HintPath>$(HollowKnightRefs)/MonoMod.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+      <HintPath>$(HollowKnightRefs)\mscorlib.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>$(HollowKnightRefs)/Newtonsoft.Json.dll</HintPath>
