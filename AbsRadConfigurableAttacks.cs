@@ -50,7 +50,7 @@ namespace AbsRadConfigurableAttacks {
             { "nailSweepTop", 0.75f },
             { "eyeBeams", 1f },
             { "beamSweepLeft", 0.75f },
-            { "beamSweepRight", 0.5f },
+            { "beamSweepRight", 0.75f },
             { "nailFan", 1f },
             { "orbs", 1f },
         };
@@ -58,7 +58,7 @@ namespace AbsRadConfigurableAttacks {
             { "nailSweep", 0.5f },
             { "eyeBeams", 1f },
             { "beamSweepLeft", 0.75f },
-            { "beamSweepRight", 0.5f },
+            { "beamSweepRight", 0.75f },
             { "nailFan", 1f },
             { "orbs", 1f },
         };
