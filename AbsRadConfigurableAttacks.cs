@@ -208,7 +208,7 @@ namespace AbsRadConfigurableAttacks {
                 topMenuPanel.GetButton(firstPhaseBtnNames[key], "AR Start").UpdateText(GetButtonText(key));
             }
             UpdateWeightsFSM();
-            RemoveFirstPhasesAttackRepititionCap();
+            AddFirstPhasesAttackRepititionCap();
         }
 
         private void ResetPlatsPhase() {
@@ -217,7 +217,7 @@ namespace AbsRadConfigurableAttacks {
                 topMenuPanel.GetButton(platformPhaseBtnNames[key], "AR Plats").UpdateText(GetButtonText(key, false));
             }
             UpdateWeightsFSM();
-            RemovePlatsAttackRepititionCap();
+            AddPlatsAttackRepititionCap();
         }
 
         private void UpdateWeightsFSM() {
